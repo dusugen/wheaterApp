@@ -6,15 +6,16 @@ import {
   Image,
   ScrollView,
   Text,
-  useColorMode,
+  useColorMode
 } from "native-base";
-import React, { useCallback, useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import {
   Dimensions,
   RefreshControl,
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
+import { Modalize } from "react-native-modalize";
 import normalize from "react-native-normalize";
 import { useSelector } from "react-redux";
 import {
@@ -25,18 +26,22 @@ import {
 } from "../../../core/store/slices/weaterSlice";
 import { useThunkDispatch } from "../../../core/store/store";
 import { StatusOfRequestEnum } from "../../../core/types/enums/statusOfRequestEnum";
-import { Layout } from "../../Layout";
-import { WeatherTable } from "../../WeatherTable";
-import { Modalize } from "react-native-modalize";
 import { ChangeThemeButton } from "../../ChangeThemeButton";
+import { Layout } from "../../Layout";
+import { Loader } from "../../Loader";
+import { WeatherTable } from "../../WeatherTable";
 
 export const HomePage = () => {
-  const { toggleColorMode } = useColorMode();
+  const { colorMode } = useColorMode();
 
   const modalizeRef = useRef<Modalize>(null);
 
   const onOpen = () => {
     modalizeRef.current?.open();
+  };
+
+  const onChange = () => {
+    modalizeRef.current?.close();
   };
 
   const dispatch = useThunkDispatch();
@@ -70,10 +75,11 @@ export const HomePage = () => {
   if (!weatherData) {
     return (
       <Layout>
-        <Center>Loading...</Center>
+        <Loader />
       </Layout>
     );
   }
+
   const icon = weatherData.weather[0].icon;
 
   return (
@@ -109,15 +115,18 @@ export const HomePage = () => {
             }}
           />
         </Center>
-        <TouchableOpacity>
+        <TouchableOpacity style={{ marginTop: "auto" }}>
           <Button onPress={onOpen} style={styles.button}>
             change theme
           </Button>
         </TouchableOpacity>
       </ScrollView>
       <Modalize ref={modalizeRef} adjustToContentHeight={true}>
-        <Box height={Dimensions.get("window").height / 1.18}>
-          <ChangeThemeButton />
+        <Box
+          height={Dimensions.get("window").height / 1.18}
+          backgroundColor={colorMode === "light" ? "whitesmoke" : "black"}
+        >
+          <ChangeThemeButton onChange={onChange}/>
         </Box>
       </Modalize>
     </Layout>
@@ -129,7 +138,7 @@ const styles = StyleSheet.create({
     marginTop: "auto",
   },
   icon: {
-    width: 40,
-    height: 40,
+    width: normalize(40),
+    height: normalize(40),
   },
 });

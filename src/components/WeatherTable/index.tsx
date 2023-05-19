@@ -12,7 +12,6 @@ interface WeatherTableProps {
 }
 
 export const WeatherTable: FC<WeatherTableProps> = ({ weatherData }) => {
-
   return (
     <Box>
       <Stack space={normalize(10)} style={styles.stack}>
