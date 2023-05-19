@@ -1,6 +1,6 @@
 import { Box, Input, Text } from "native-base";
 import React, { useCallback, useRef, useState } from "react";
-import { Button, Dimensions, StyleSheet } from "react-native";
+import { Button, Keyboard, StyleSheet } from "react-native";
 import { Modalize } from "react-native-modalize";
 import { useSelector } from "react-redux";
 import {
@@ -8,6 +8,7 @@ import {
   selectLocationByName,
 } from "../../../core/store/slices/weaterSlice";
 import { useThunkDispatch } from "../../../core/store/store";
+import { WeatherModal } from "../../WeatherModal";
 import { StatusOfRequestEnum } from "../../../core/types/enums/statusOfRequestEnum";
 
 export const Settings = () => {
@@ -16,17 +17,19 @@ export const Settings = () => {
 
   const dispatch = useThunkDispatch();
 
-  const handleGeocode = useCallback(() => {
-    if (address && address.trim().length) {
-      dispatch(getLocationByName(address));
-    }
-    if (status === StatusOfRequestEnum.SUCCESS) {
-      setAddress("");
-      modalizeRef.current?.open();
-    }
-  }, [address]);
+  const { data, status, error } = useSelector(selectLocationByName);
 
-  const { data, status } = useSelector(selectLocationByName);
+  const handleGeocode = useCallback(async () => {
+    if (address && address.trim().length) {
+      Keyboard.dismiss();
+      const {
+        meta: { requestStatus },
+      } = await dispatch(getLocationByName(address));
+      if (requestStatus === "rejected") return;
+    }
+    modalizeRef.current?.open();
+    setAddress("");
+  }, [address]);
 
   return (
     <Box style={styles.container}>
@@ -37,19 +40,19 @@ export const Settings = () => {
         variant="outline"
         style={styles.input}
       />
+      {status === StatusOfRequestEnum.ERROR && <Text>{error}</Text>}
       {data && (
         <>
           <Text>lat:{data.latitude}</Text>
           <Text>lon:{data.longitude}</Text>
         </>
       )}
-      <Button title="search" onPress={handleGeocode} />
-      <Modalize ref={modalizeRef} adjustToContentHeight={true}>
-        <Box height={Dimensions.get("window").height / 1.18}>
-          <Text>Some content here</Text>
-          {/* <ChangeThemeButton /> */}
-        </Box>
-      </Modalize>
+      <Button
+        title="search"
+        disabled={!address || !address?.trim().length}
+        onPress={handleGeocode}
+      />
+      <WeatherModal data={data} ref={modalizeRef} />
     </Box>
   );
 };

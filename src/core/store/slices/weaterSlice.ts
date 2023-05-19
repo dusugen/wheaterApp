@@ -4,14 +4,21 @@ import {
   createSelector,
   createSlice,
 } from "@reduxjs/toolkit";
-import * as Location from "expo-location";
+import {
+  LocationObject,
+  LocationGeocodedLocation,
+  requestForegroundPermissionsAsync,
+  getCurrentPositionAsync,
+  geocodeAsync,
+} from "expo-location";
 import { StatusOfRequestEnum } from "../../types/enums/statusOfRequestEnum";
 import config from "../../../../config.json";
 import { WeatherData } from "../../types/WeatherData";
+import { WeatherCoords } from "../../types/WeatherCoords";
 
 interface InitialState {
   Location: {
-    data: Location.LocationObject | null;
+    data: LocationObject | null;
     status: StatusOfRequestEnum;
     error: string | null;
   };
@@ -21,7 +28,7 @@ interface InitialState {
     error: string | null;
   };
   LocationByName: {
-    data: Location.LocationGeocodedLocation | null;
+    data: LocationGeocodedLocation | null;
     status: StatusOfRequestEnum;
     error: string | null;
   };
@@ -46,16 +53,16 @@ const initialState: InitialState = {
 };
 
 export const getLocation = createAsyncThunk<
-  Location.LocationObject,
+  LocationObject,
   void,
   { rejectValue: string }
 >("weather/getLocation", async (_, { rejectWithValue }) => {
   try {
-    const { status } = await Location.requestForegroundPermissionsAsync();
+    const { status } = await requestForegroundPermissionsAsync();
     if (status !== "granted") {
       return rejectWithValue("Permission to access location was denied");
     }
-    const location = await Location.getCurrentPositionAsync({});
+    const location = await getCurrentPositionAsync({});
     return location;
   } catch (error: any) {
     if (error.message) {
@@ -66,12 +73,12 @@ export const getLocation = createAsyncThunk<
 });
 
 export const getLocationByName = createAsyncThunk<
-  Location.LocationGeocodedLocation,
+  LocationGeocodedLocation,
   string,
   { rejectValue: string }
 >("weather/getLocationByName", async (name, { rejectWithValue }) => {
   try {
-    const geocodeLocation = await Location.geocodeAsync(name);
+    const geocodeLocation = await geocodeAsync(name);
     if (!geocodeLocation.length) {
       return rejectWithValue("Wrong name of location !");
     }
@@ -86,27 +93,31 @@ export const getLocationByName = createAsyncThunk<
 
 export const getWeather = createAsyncThunk<
   WeatherData,
-  { lat: number; lon: number },
+  WeatherCoords,
   { rejectValue: string }
->("weather/fetchWeater", async ({ lat, lon }, { rejectWithValue }) => {
-  try {
-    const searchParams = new URLSearchParams({
-      lat: String(lat),
-      lon: String(lon),
-      appid: config.apiKey,
-      units: "metric",
-    }).toString();
+>(
+  "weather/fetchWeater",
+  async ({ latitude, longitude }, { rejectWithValue }) => {
+    try {
+      const searchParams = new URLSearchParams({
+        lat: String(latitude),
+        lon: String(longitude),
+        appid: config.apiKey,
+        units: "metric",
+      }).toString();
 
-    const response = await fetch(`${config.apiUrl}?${searchParams}`);
-    const data: WeatherData = await response.json();
-    return data;
-  } catch (error: any) {
-    if (error.message) {
-      return rejectWithValue(error.message);
+      const response = await fetch(`${config.apiUrl}?${searchParams}`);
+      const data: WeatherData = await response.json();
+      if (!data.weather.length) rejectWithValue("No data");
+      return data;
+    } catch (error) {
+      if (error instanceof Error) {
+        return rejectWithValue(error.message);
+      }
+      return rejectWithValue("Unknown Error !");
     }
-    return rejectWithValue("Unknown Error !");
   }
-});
+);
 
 const weatherSlice = createSlice({
   name: "weather",
@@ -143,7 +154,7 @@ const weatherSlice = createSlice({
       .addCase(getWeather.fulfilled, (state, action) => {
         state.fetchWeather.status = StatusOfRequestEnum.SUCCESS;
         state.fetchWeather.data = action.payload;
-        state.Location.error = null;
+        state.fetchWeather.error = null;
       })
       .addCase(getWeather.rejected, (state, action) => {
         state.fetchWeather.status = StatusOfRequestEnum.ERROR;

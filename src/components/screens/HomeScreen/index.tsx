@@ -6,7 +6,7 @@ import {
   Image,
   ScrollView,
   Text,
-  useColorMode
+  useColorMode,
 } from "native-base";
 import React, { useCallback, useEffect, useRef } from "react";
 import {
@@ -21,6 +21,7 @@ import { useSelector } from "react-redux";
 import {
   getLocation,
   getWeather,
+  resetWeather,
   selectLocation,
   selectWeather,
 } from "../../../core/store/slices/weaterSlice";
@@ -30,9 +31,12 @@ import { ChangeThemeButton } from "../../ChangeThemeButton";
 import { Layout } from "../../Layout";
 import { Loader } from "../../Loader";
 import { WeatherTable } from "../../WeatherTable";
+import { WeatherView } from "../../WeatherView";
+import { useIsFocused } from "@react-navigation/native";
 
 export const HomePage = () => {
   const { colorMode } = useColorMode();
+  const isFocused = useIsFocused();
 
   const modalizeRef = useRef<Modalize>(null);
 
@@ -53,12 +57,13 @@ export const HomePage = () => {
   const { data } = useSelector(selectLocation);
 
   useEffect(() => {
-    if (data) {
-      const lat = data.coords.latitude;
-      const lon = data.coords.longitude;
-      dispatch(getWeather({ lat, lon }));
+    if (data && isFocused) {
+      dispatch(getWeather(data.coords));
     }
-  }, [data]);
+    return () => {
+      if (isFocused) dispatch(resetWeather());
+    };
+  }, [data, isFocused]);
 
   const { data: weatherData, status: weatherStatus } =
     useSelector(selectWeather);
@@ -66,9 +71,7 @@ export const HomePage = () => {
   const onRefresh = useCallback(async () => {
     const location = data || (await dispatch(getLocation())).payload;
     if (typeof location === "object") {
-      const lat = location.coords.latitude;
-      const lon = location.coords.longitude;
-      dispatch(getWeather({ lat, lon }));
+      dispatch(getWeather(location.coords));
     }
   }, []);
 
@@ -79,8 +82,6 @@ export const HomePage = () => {
       </Layout>
     );
   }
-
-  const icon = weatherData.weather[0].icon;
 
   return (
     <Layout>
@@ -93,28 +94,7 @@ export const HomePage = () => {
           />
         }
       >
-        <WeatherTable weatherData={weatherData} />
-        <Center mt={normalize(50)}>
-          <Box display="flex" flexDirection="row">
-            <Heading size="4xl">{Math.round(weatherData.main.temp)}</Heading>
-            <Heading size="xl" alignSelf="flex-start">
-              &#8451;
-            </Heading>
-          </Box>
-        </Center>
-        <Center mt={normalize(6)}>
-          <Heading size="xl">
-            {weatherData.name}, {weatherData.sys.country}
-          </Heading>
-          <Text>{weatherData.weather[0].description}</Text>
-          <Image
-            size={normalize(250, "height")}
-            alt="icon"
-            source={{
-              uri: `https://openweathermap.org/img/wn/${icon}@4x.png`,
-            }}
-          />
-        </Center>
+        <WeatherView weatherData={weatherData} />
         <TouchableOpacity style={{ marginTop: "auto" }}>
           <Button onPress={onOpen} style={styles.button}>
             change theme
@@ -126,7 +106,7 @@ export const HomePage = () => {
           height={Dimensions.get("window").height / 1.18}
           backgroundColor={colorMode === "light" ? "whitesmoke" : "black"}
         >
-          <ChangeThemeButton onChange={onChange}/>
+          <ChangeThemeButton onChange={onChange} />
         </Box>
       </Modalize>
     </Layout>

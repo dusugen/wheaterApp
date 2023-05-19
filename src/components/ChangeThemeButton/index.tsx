@@ -38,7 +38,7 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    height: "100%",
+    height: "85%",
     gap: normalize(50),
   },
 });
