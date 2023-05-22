@@ -1,5 +1,15 @@
 export interface WeatherData {
-  name: string;
+  code: number;
+  list: WeatherMainData[];
+  city: {
+    name: string;
+    country: string;
+  };
+}
+
+export interface WeatherMainData {
+  dt: number;
+  dt_txt: string;
   main: {
     feels_like: number;
     temp: number;
@@ -14,10 +24,7 @@ export interface WeatherData {
     {
       main: string;
       icon: string;
-      description:string
+      description: string;
     }
   ];
-  sys: {
-    country: string;
-  };
 }

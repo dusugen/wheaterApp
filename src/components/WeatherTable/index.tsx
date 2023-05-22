@@ -1,11 +1,9 @@
-import { Box, Stack, Text, View, useTheme } from "native-base";
+import { FontAwesome, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Box, Stack, Text, View } from "native-base";
 import React, { FC } from "react";
-import { WeatherData } from "../../core/types/WeatherData";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { FontAwesome5 } from "@expo/vector-icons";
-import { FontAwesome } from "@expo/vector-icons";
 import { StyleSheet } from "react-native";
 import normalize from "react-native-normalize";
+import { WeatherData } from "../../core/types/WeatherData";
 
 interface WeatherTableProps {
   weatherData: WeatherData;
@@ -21,11 +19,15 @@ export const WeatherTable: FC<WeatherTableProps> = ({ weatherData }) => {
             size={normalize(32)}
             color="black"
           />
-          <Text style={styles.text}>{weatherData.main.pressure} mm</Text>
+          <Text style={styles.text}>
+            {weatherData.list[0].main.pressure} mm
+          </Text>
         </View>
         <View style={styles.view}>
           <FontAwesome5 name="wind" size={normalize(32)} color="black" />
-          <Text style={styles.text}>{weatherData.wind.speed} m/s</Text>
+          <Text style={styles.text}>
+            {weatherData.list[0].wind.speed} m/s
+          </Text>
         </View>
         <View style={styles.view}>
           <MaterialCommunityIcons
@@ -33,7 +35,9 @@ export const WeatherTable: FC<WeatherTableProps> = ({ weatherData }) => {
             size={normalize(38)}
             color="black"
           />
-          <Text style={styles.text}>{weatherData.main.humidity}%</Text>
+          <Text style={styles.text}>
+            {weatherData.list[0].main.humidity}%
+          </Text>
         </View>
       </Stack>
     </Box>

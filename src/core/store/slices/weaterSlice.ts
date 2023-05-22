@@ -108,7 +108,8 @@ export const getWeather = createAsyncThunk<
 
       const response = await fetch(`${config.apiUrl}?${searchParams}`);
       const data: WeatherData = await response.json();
-      if (!data.weather.length) rejectWithValue("No data");
+
+      if (data.code !== 200) rejectWithValue("No data");
       return data;
     } catch (error) {
       if (error instanceof Error) {
@@ -187,6 +188,10 @@ export const selectLocation = createSelector(
 export const selectWeather = createSelector(
   selfSelector,
   (state) => state.fetchWeather
+);
+
+export const selectFutureWeather = createSelector(selfSelector, (state) =>
+  state.fetchWeather.data?.list.filter((item, index) => index >= 1 && index < 8)
 );
 
 export const selectLocationByName = createSelector(

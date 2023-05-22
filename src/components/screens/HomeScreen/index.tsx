@@ -1,13 +1,5 @@
-import {
-  Box,
-  Button,
-  Center,
-  Heading,
-  Image,
-  ScrollView,
-  Text,
-  useColorMode,
-} from "native-base";
+import { useIsFocused } from "@react-navigation/native";
+import { Box, Button, ScrollView, Text, useColorMode } from "native-base";
 import React, { useCallback, useEffect, useRef } from "react";
 import {
   Dimensions,
@@ -30,9 +22,8 @@ import { StatusOfRequestEnum } from "../../../core/types/enums/statusOfRequestEn
 import { ChangeThemeButton } from "../../ChangeThemeButton";
 import { Layout } from "../../Layout";
 import { Loader } from "../../Loader";
-import { WeatherTable } from "../../WeatherTable";
 import { WeatherView } from "../../WeatherView";
-import { useIsFocused } from "@react-navigation/native";
+import { FutureWeatherList } from "../../FutureWeatherList";
 
 export const HomePage = () => {
   const { colorMode } = useColorMode();
@@ -65,8 +56,13 @@ export const HomePage = () => {
     };
   }, [data, isFocused]);
 
-  const { data: weatherData, status: weatherStatus } =
-    useSelector(selectWeather);
+  const {
+    data: weatherData,
+    status: weatherStatus,
+    error: weatherError,
+  } = useSelector(selectWeather);
+
+  console.log(weatherData, "data");
 
   const onRefresh = useCallback(async () => {
     const location = data || (await dispatch(getLocation())).payload;
@@ -74,6 +70,13 @@ export const HomePage = () => {
       dispatch(getWeather(location.coords));
     }
   }, []);
+  if (weatherError) {
+    return (
+      <Layout>
+        <Text>{weatherError}</Text>
+      </Layout>
+    );
+  }
 
   if (!weatherData) {
     return (
@@ -95,11 +98,9 @@ export const HomePage = () => {
         }
       >
         <WeatherView weatherData={weatherData} />
-        <TouchableOpacity style={{ marginTop: "auto" }}>
-          <Button onPress={onOpen} style={styles.button}>
-            change theme
-          </Button>
-        </TouchableOpacity>
+        <Box style={{ marginTop: "auto" }}>
+          <Button onPress={onOpen}>change theme</Button>
+        </Box>
       </ScrollView>
       <Modalize ref={modalizeRef} adjustToContentHeight={true}>
         <Box
@@ -114,9 +115,6 @@ export const HomePage = () => {
 };
 
 const styles = StyleSheet.create({
-  button: {
-    marginTop: "auto",
-  },
   icon: {
     width: normalize(40),
     height: normalize(40),
