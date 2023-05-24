@@ -1,20 +1,21 @@
-import { RootState } from "./../store";
 import {
   createAsyncThunk,
   createSelector,
   createSlice,
 } from "@reduxjs/toolkit";
 import {
-  LocationObject,
   LocationGeocodedLocation,
-  requestForegroundPermissionsAsync,
-  getCurrentPositionAsync,
+  LocationObject,
   geocodeAsync,
+  getCurrentPositionAsync,
+  requestForegroundPermissionsAsync,
 } from "expo-location";
-import { StatusOfRequestEnum } from "../../types/enums/statusOfRequestEnum";
 import config from "../../../../config.json";
-import { WeatherData } from "../../types/WeatherData";
 import { WeatherCoords } from "../../types/WeatherCoords";
+import { WeatherData } from "../../types/WeatherData";
+import { StatusOfRequestEnum } from "../../types/enums/statusOfRequestEnum";
+import { RootState } from "./../store";
+import { KeyValuePair } from "@react-native-async-storage/async-storage/lib/typescript/types";
 
 interface InitialState {
   Location: {
@@ -32,6 +33,7 @@ interface InitialState {
     status: StatusOfRequestEnum;
     error: string | null;
   };
+  SearchedLocation?: [string, WeatherCoords][];
 }
 
 const initialState: InitialState = {
@@ -109,7 +111,7 @@ export const getWeather = createAsyncThunk<
       const response = await fetch(`${config.apiUrl}?${searchParams}`);
       const data: WeatherData = await response.json();
 
-      if (data.code !== 200) rejectWithValue("No data");
+      if (data.cod !== 200) rejectWithValue("No data");
       return data;
     } catch (error) {
       if (error instanceof Error) {
@@ -128,6 +130,10 @@ const weatherSlice = createSlice({
       state.fetchWeather.data = null;
       state.fetchWeather.status = StatusOfRequestEnum.IDLE;
       state.fetchWeather.error = null;
+    },
+    setSearchedLocation: (state, action) => {
+      console.log(action, "actrion");
+      state.SearchedLocation = action.payload;
     },
   },
   extraReducers: (builder) => {
@@ -190,6 +196,11 @@ export const selectWeather = createSelector(
   (state) => state.fetchWeather
 );
 
+export const selectSearchedValue = createSelector(
+  selfSelector,
+  (state) => state.SearchedLocation
+);
+
 export const selectFutureWeather = createSelector(selfSelector, (state) =>
   state.fetchWeather.data?.list.filter((item, index) => index >= 1 && index < 8)
 );
@@ -199,6 +210,6 @@ export const selectLocationByName = createSelector(
   (state) => state.LocationByName
 );
 
-export const { resetWeather } = weatherSlice.actions;
+export const { resetWeather, setSearchedLocation } = weatherSlice.actions;
 
 export default weatherSlice.reducer;

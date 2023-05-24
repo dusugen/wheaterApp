@@ -3,12 +3,9 @@ import { Box, Button, ScrollView, Text, useColorMode } from "native-base";
 import React, { useCallback, useEffect, useRef } from "react";
 import {
   Dimensions,
-  RefreshControl,
-  StyleSheet,
-  TouchableOpacity,
+  RefreshControl
 } from "react-native";
 import { Modalize } from "react-native-modalize";
-import normalize from "react-native-normalize";
 import { useSelector } from "react-redux";
 import {
   getLocation,
@@ -23,7 +20,6 @@ import { ChangeThemeButton } from "../../ChangeThemeButton";
 import { Layout } from "../../Layout";
 import { Loader } from "../../Loader";
 import { WeatherView } from "../../WeatherView";
-import { FutureWeatherList } from "../../FutureWeatherList";
 
 export const HomePage = () => {
   const { colorMode } = useColorMode();
@@ -61,8 +57,6 @@ export const HomePage = () => {
     status: weatherStatus,
     error: weatherError,
   } = useSelector(selectWeather);
-
-  console.log(weatherData, "data");
 
   const onRefresh = useCallback(async () => {
     const location = data || (await dispatch(getLocation())).payload;
@@ -113,10 +107,3 @@ export const HomePage = () => {
     </Layout>
   );
 };
-
-const styles = StyleSheet.create({
-  icon: {
-    width: normalize(40),
-    height: normalize(40),
-  },
-});

@@ -1,5 +1,5 @@
 export interface WeatherData {
-  code: number;
+  cod: number;
   list: WeatherMainData[];
   city: {
     name: string;
