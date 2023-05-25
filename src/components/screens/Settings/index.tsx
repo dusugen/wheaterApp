@@ -1,22 +1,23 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AntDesign } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
-import { Box, Input, Text } from "native-base";
+import { Box, FlatList, Heading, IconButton, Input, Text } from "native-base";
 import React, { FC, useCallback, useEffect, useRef, useState } from "react";
 import { Button, Keyboard, StyleSheet } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Modalize } from "react-native-modalize";
+import normalize from "react-native-normalize";
 import { useSelector } from "react-redux";
 import {
+  getDataFromStorage,
   getLocationByName,
+  removeLocationFromStorage,
   selectLocationByName,
-  selectSearchedValue,
+  selectMobileStorage,
   selectWeather,
-  setSearchedLocation,
+  setDataToStorage,
 } from "../../../core/store/slices/weaterSlice";
 import { useThunkDispatch } from "../../../core/store/store";
-import { WeatherCoordsWithName } from "../../../core/types/WeatherCoords";
 import { StatusOfRequestEnum } from "../../../core/types/enums/statusOfRequestEnum";
-import { setCoordsToStorage } from "../../../utils/setDataAsyncStorage";
 import { WeatherModal } from "../../WeatherModal";
 
 export const Settings: FC = () => {
@@ -31,33 +32,37 @@ export const Settings: FC = () => {
   const { data: weatherData } = useSelector(selectWeather);
 
   useEffect(() => {
-    console.log("start");
+    dispatch(getDataFromStorage());
+  }, [isFocused, weatherData]);
 
-    (async () => {
-      const storageKeys = await AsyncStorage.getAllKeys();
-      // await AsyncStorage.clear();
-      const storageData = await AsyncStorage.multiGet(storageKeys);
+  // Set data to storage
+  useEffect(() => {
+    if (data && weatherData) {
+      dispatch(
+        setDataToStorage({
+          ...data,
+          name: weatherData.city.name,
+        })
+      );
+    }
+  }, [data, weatherData]);
 
-      const validStorageData = storageData.map((item) => {
-        if (item[1])
-          return [item[0], JSON.parse(item[1])] as WeatherCoordsWithName[];
-        return item;
-      });
-      console.log("process");
+  //Delete data from Storage
+  const handleDelete = (item: string) => {
+    dispatch(removeLocationFromStorage(item));
+    dispatch(getDataFromStorage());
+  };
 
-      dispatch(setSearchedLocation(validStorageData));
-    })();
-    console.log("end");
-  }, [isFocused]);
-
-  const handleClickOpen = () => {
-    // const {
-    //   meta: { requestStatus },
-    // } = await dispatch(getLocationByName());
-    // if (requestStatus === "rejected") return;
+  // Display ModalView on CityName click
+  const handleClickOpen = async (name: string) => {
+    const {
+      meta: { requestStatus },
+    } = await dispatch(getLocationByName(name));
+    if (requestStatus === "rejected") return;
     modalizeRef.current?.open();
   };
 
+  // Open ModalView on Search button click
   const handleGeocode = useCallback(async () => {
     if (address && address.trim().length) {
       Keyboard.dismiss();
@@ -66,21 +71,12 @@ export const Settings: FC = () => {
       } = await dispatch(getLocationByName(address));
       if (requestStatus === "rejected") return;
     }
+
     modalizeRef.current?.open();
     setAddress("");
   }, [address]);
 
-  useEffect(() => {
-    if (data && weatherData) {
-      setCoordsToStorage({
-        ...data,
-        name: weatherData.city.name,
-      });
-    }
-  }, [data, weatherData]);
-
-  const searchedLocation = useSelector(selectSearchedValue);
-  console.log(searchedLocation, "searched");
+  const { data: storageData } = useSelector(selectMobileStorage);
 
   return (
     <Box style={styles.container}>
@@ -99,12 +95,41 @@ export const Settings: FC = () => {
         onPress={handleGeocode}
       />
       <Text>Last results :</Text>
-      {searchedLocation &&
-        searchedLocation.map((item, index) => (
-          <TouchableOpacity key={index}>
-            <Text onPress={handleClickOpen}>{item[0]}</Text>
+
+      <FlatList
+        style={{
+          width: "100%",
+        }}
+        data={storageData}
+        keyExtractor={(item) => item}
+        renderItem={({ item, index }) => (
+          <TouchableOpacity
+            key={index}
+            style={{
+              padding: normalize(10),
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "center",
+              alignItems: "center",
+              gap: normalize(10),
+            }}
+          >
+            <Heading
+              size="md"
+              style={{ textAlign: "center", alignSelf: "center" }}
+              onPress={() => handleClickOpen(item)}
+            >
+              {item}
+            </Heading>
+
+            <IconButton
+              icon={<AntDesign name="delete" size={24} color="black" />}
+              onPress={() => handleDelete(item)}
+              title="delete"
+            />
           </TouchableOpacity>
-        ))}
+        )}
+      />
       <WeatherModal data={data} ref={modalizeRef} />
     </Box>
   );
@@ -115,10 +140,12 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    marginTop: normalize(40),
     height: "100%",
-    gap: 30,
+    gap: normalize(30),
   },
   input: {
     maxWidth: "70%",
+    alignSelf: "center",
   },
 });

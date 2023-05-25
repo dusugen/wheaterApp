@@ -11,11 +11,14 @@ import {
   requestForegroundPermissionsAsync,
 } from "expo-location";
 import config from "../../../../config.json";
-import { WeatherCoords } from "../../types/WeatherCoords";
+import {
+  WeatherCoords,
+  WeatherCoordsWithName,
+} from "../../types/WeatherCoords";
 import { WeatherData } from "../../types/WeatherData";
 import { StatusOfRequestEnum } from "../../types/enums/statusOfRequestEnum";
 import { RootState } from "./../store";
-import { KeyValuePair } from "@react-native-async-storage/async-storage/lib/typescript/types";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 interface InitialState {
   Location: {
@@ -33,7 +36,12 @@ interface InitialState {
     status: StatusOfRequestEnum;
     error: string | null;
   };
-  SearchedLocation?: [string, WeatherCoords][];
+  MobileStorage: {
+    data: string[];
+    status: StatusOfRequestEnum;
+    error: string | null;
+  };
+  // SearchedLocation?: [string, WeatherCoords][];
 }
 
 const initialState: InitialState = {
@@ -52,7 +60,56 @@ const initialState: InitialState = {
     status: StatusOfRequestEnum.IDLE,
     error: null,
   },
+  MobileStorage: {
+    data: [],
+    status: StatusOfRequestEnum.IDLE,
+    error: null,
+  },
 };
+
+export const setDataToStorage = createAsyncThunk<
+  void,
+  WeatherCoordsWithName,
+  { rejectValue: string }
+>(
+  "weather/setDataToStorage",
+  async ({ latitude, longitude, name }, { rejectWithValue }) => {
+    try {
+      const jsonData = JSON.stringify({ latitude, longitude });
+      await AsyncStorage.setItem(name, jsonData);
+    } catch (error) {
+      if (error instanceof Error) rejectWithValue(error.message);
+      return rejectWithValue("Unknown Error!");
+    }
+  }
+);
+
+export const getDataFromStorage = createAsyncThunk<
+  string[],
+  void,
+  { rejectValue: string }
+>("weather/setDataToStorage", async (_, { rejectWithValue }) => {
+  try {
+    const storageData = (await AsyncStorage.getAllKeys()) as string[];
+    return storageData;
+  } catch (error) {
+    if (error instanceof Error) rejectWithValue(error.message);
+    return rejectWithValue("Unknown Error!");
+  }
+});
+
+export const removeLocationFromStorage = createAsyncThunk<
+  void,
+  string,
+  { rejectValue: string }
+>("weather/setDataToStorage", async (name, { rejectWithValue }) => {
+  try {
+    return AsyncStorage.removeItem(name);
+  } catch (error) {
+    if (error instanceof Error) rejectWithValue(error.message);
+    return rejectWithValue("Unknown Error!");
+  }
+});
 
 export const getLocation = createAsyncThunk<
   LocationObject,
@@ -66,8 +123,8 @@ export const getLocation = createAsyncThunk<
     }
     const location = await getCurrentPositionAsync({});
     return location;
-  } catch (error: any) {
-    if (error.message) {
+  } catch (error) {
+    if (error instanceof Error) {
       return rejectWithValue(error.message);
     }
     return rejectWithValue("Unknown Error !");
@@ -131,10 +188,6 @@ const weatherSlice = createSlice({
       state.fetchWeather.status = StatusOfRequestEnum.IDLE;
       state.fetchWeather.error = null;
     },
-    setSearchedLocation: (state, action) => {
-      console.log(action, "actrion");
-      state.SearchedLocation = action.payload;
-    },
   },
   extraReducers: (builder) => {
     builder
@@ -181,6 +234,20 @@ const weatherSlice = createSlice({
         state.LocationByName.status = StatusOfRequestEnum.ERROR;
         state.LocationByName.error = action.payload || "Unknown Error !";
       });
+
+    builder
+      .addCase(getDataFromStorage.fulfilled, (state, action) => {
+        state.MobileStorage.data = action.payload;
+        state.MobileStorage.status = StatusOfRequestEnum.SUCCESS;
+      })
+      .addCase(getDataFromStorage.pending, (state) => {
+        state.MobileStorage.status = StatusOfRequestEnum.LOADING;
+        state.MobileStorage.error = null;
+      })
+      .addCase(getDataFromStorage.rejected, (state, action) => {
+        state.MobileStorage.status = StatusOfRequestEnum.ERROR;
+        state.MobileStorage.error = action.payload || "Unknown Error !";
+      });
   },
 });
 
@@ -196,9 +263,9 @@ export const selectWeather = createSelector(
   (state) => state.fetchWeather
 );
 
-export const selectSearchedValue = createSelector(
+export const selectMobileStorage = createSelector(
   selfSelector,
-  (state) => state.SearchedLocation
+  (state) => state.MobileStorage
 );
 
 export const selectFutureWeather = createSelector(selfSelector, (state) =>
@@ -210,6 +277,6 @@ export const selectLocationByName = createSelector(
   (state) => state.LocationByName
 );
 
-export const { resetWeather, setSearchedLocation } = weatherSlice.actions;
+export const { resetWeather } = weatherSlice.actions;
 
 export default weatherSlice.reducer;
