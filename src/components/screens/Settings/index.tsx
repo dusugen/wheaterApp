@@ -1,8 +1,17 @@
 import { AntDesign } from "@expo/vector-icons";
 import { useIsFocused } from "@react-navigation/native";
-import { Box, FlatList, Heading, IconButton, Input, Text } from "native-base";
+import {
+  Box,
+  Button,
+  FlatList,
+  Heading,
+  IconButton,
+  Input,
+  Text,
+  useColorMode,
+} from "native-base";
 import React, { FC, useCallback, useEffect, useRef, useState } from "react";
-import { Button, Keyboard, StyleSheet } from "react-native";
+import { Keyboard, StyleSheet } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
 import { Modalize } from "react-native-modalize";
 import normalize from "react-native-normalize";
@@ -18,10 +27,16 @@ import {
 } from "../../../core/store/slices/weaterSlice";
 import { useThunkDispatch } from "../../../core/store/store";
 import { StatusOfRequestEnum } from "../../../core/types/enums/statusOfRequestEnum";
+import { ConfirmModal } from "../../ConfirmModal";
 import { WeatherModal } from "../../WeatherModal";
 
 export const Settings: FC = () => {
   const isFocused = useIsFocused();
+  const { colorMode } = useColorMode();
+
+  const [showModal, setShowModal] = useState(false);
+  const [touchedCity, setTouchedCity] = useState<string | null>(null);
+
   const [address, setAddress] = useState<string | undefined>("");
   const modalizeRef = useRef<Modalize>(null);
 
@@ -49,15 +64,18 @@ export const Settings: FC = () => {
 
   //Delete data from Storage
   const handleDelete = (item: string) => {
+    setShowModal(true);
     dispatch(removeLocationFromStorage(item));
     dispatch(getDataFromStorage());
   };
 
   // Display ModalView on CityName click
   const handleClickOpen = async (name: string) => {
+    console.log("click");
     const {
       meta: { requestStatus },
     } = await dispatch(getLocationByName(name));
+
     if (requestStatus === "rejected") return;
     modalizeRef.current?.open();
   };
@@ -70,16 +88,19 @@ export const Settings: FC = () => {
         meta: { requestStatus },
       } = await dispatch(getLocationByName(address));
       if (requestStatus === "rejected") return;
+      modalizeRef.current?.open();
     }
 
-    modalizeRef.current?.open();
     setAddress("");
   }, [address]);
 
   const { data: storageData } = useSelector(selectMobileStorage);
 
   return (
-    <Box style={styles.container}>
+    <Box
+      style={styles.container}
+      bgColor={colorMode === "dark" ? "#6d7685" : "#abe7f1"}
+    >
       <Input
         placeholder="Enter address"
         value={address}
@@ -90,10 +111,11 @@ export const Settings: FC = () => {
       {status === StatusOfRequestEnum.ERROR && <Text>{error}</Text>}
 
       <Button
-        title="search"
         disabled={!address || !address?.trim().length}
         onPress={handleGeocode}
-      />
+      >
+        search
+      </Button>
       <Text>Last results :</Text>
 
       <FlatList
@@ -103,33 +125,56 @@ export const Settings: FC = () => {
         data={storageData}
         keyExtractor={(item) => item}
         renderItem={({ item, index }) => (
-          <TouchableOpacity
-            key={index}
-            style={{
-              padding: normalize(10),
-              display: "flex",
-              flexDirection: "row",
-              justifyContent: "center",
-              alignItems: "center",
-              gap: normalize(10),
-            }}
+          <Box
+            display="flex"
+            flexDirection="row"
+            alignItems="center"
+            justifyContent="center"
           >
-            <Heading
-              size="md"
-              style={{ textAlign: "center", alignSelf: "center" }}
+            <TouchableOpacity
+              key={index}
               onPress={() => handleClickOpen(item)}
+              style={{
+                padding: normalize(10),
+                display: "flex",
+                flexDirection: "row",
+                justifyContent: "center",
+                alignItems: "center",
+                gap: normalize(10),
+              }}
             >
-              {item}
-            </Heading>
-
+              <Heading
+                size="md"
+                style={{ textAlign: "center", alignSelf: "center" }}
+              >
+                {item}
+              </Heading>
+            </TouchableOpacity>
             <IconButton
-              icon={<AntDesign name="delete" size={24} color="black" />}
-              onPress={() => handleDelete(item)}
+              icon={
+                <AntDesign
+                  name="delete"
+                  size={24}
+                  color={colorMode === "dark" ? "white" : "black"}
+                />
+              }
+              onPress={() => {
+                setShowModal(true);
+                setTouchedCity(item);
+              }}
               title="delete"
             />
-          </TouchableOpacity>
+          </Box>
         )}
       />
+      {touchedCity && (
+        <ConfirmModal
+          name={touchedCity}
+          showModal={showModal}
+          setShowModal={setShowModal}
+          handleDelete={handleDelete}
+        />
+      )}
       <WeatherModal data={data} ref={modalizeRef} />
     </Box>
   );
@@ -140,11 +185,12 @@ const styles = StyleSheet.create({
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    marginTop: normalize(40),
+    paddingTop: normalize(40),
     height: "100%",
     gap: normalize(30),
   },
   input: {
+    fontSize: 20,
     maxWidth: "70%",
     alignSelf: "center",
   },

@@ -8,24 +8,30 @@ const Tab = createBottomTabNavigator();
 
 const BottomBar = () => {
   return (
-    <Tab.Navigator screenOptions={{ headerShown: false }}>
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarStyle: {
+          height: 60,
+          paddingBottom: 0,
+        },
+      }}
+    >
       <Tab.Screen
         name="Home"
         component={HomePage}
         options={{
-          tabBarIcon: ({ focused, size, color }) => {
-            return (
-              <Ionicons
-                name={
-                  focused
-                    ? "ios-information-circle"
-                    : "ios-information-circle-outline"
-                }
-                size={size}
-                color={color}
-              />
-            );
-          },
+          tabBarIcon: ({ focused, size, color }) => (
+            <Ionicons
+              name={
+                focused
+                  ? "ios-information-circle"
+                  : "ios-information-circle-outline"
+              }
+              size={size}
+              color={color}
+            />
+          ),
         }}
       />
       <Tab.Screen

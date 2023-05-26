@@ -34,7 +34,7 @@ export const WeatherModal = forwardRef<Modalize, WeatherModalProps>(
 
     return (
       <Modalize ref={ref} adjustToContentHeight={true} onClose={onClose}>
-        <Box height={Dimensions.get("window").height / 1.18}>
+        <Box height={Dimensions.get("window").height / 1.1}>
           {status === StatusOfRequestEnum.LOADING ||
             (status === StatusOfRequestEnum.IDLE && <Loader />)}
 

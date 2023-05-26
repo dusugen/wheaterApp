@@ -1,7 +1,11 @@
-import { FontAwesome, FontAwesome5, MaterialCommunityIcons } from "@expo/vector-icons";
-import { Box, Stack, Text, View } from "native-base";
+import {
+  FontAwesome,
+  FontAwesome5,
+  MaterialCommunityIcons,
+} from "@expo/vector-icons";
+import { Box, Stack, Text, View, useColorMode } from "native-base";
 import React, { FC } from "react";
-import { StyleSheet } from "react-native";
+import { Platform, StyleSheet } from "react-native";
 import normalize from "react-native-normalize";
 import { WeatherData } from "../../core/types/WeatherData";
 
@@ -10,6 +14,7 @@ interface WeatherTableProps {
 }
 
 export const WeatherTable: FC<WeatherTableProps> = ({ weatherData }) => {
+  const { colorMode } = useColorMode();
   return (
     <Box>
       <Stack space={normalize(10)} style={styles.stack}>
@@ -17,15 +22,25 @@ export const WeatherTable: FC<WeatherTableProps> = ({ weatherData }) => {
           <FontAwesome
             name="thermometer-three-quarters"
             size={normalize(32)}
-            color="black"
+            color="white"
           />
-          <Text style={styles.text}>
+          <Text
+            style={{
+              fontSize: normalize(18),
+              color: "white",
+            }}
+          >
             {weatherData.list[0].main.pressure} mm
           </Text>
         </View>
         <View style={styles.view}>
-          <FontAwesome5 name="wind" size={normalize(32)} color="black" />
-          <Text style={styles.text}>
+          <FontAwesome5 name="wind" size={normalize(32)} color="white" />
+          <Text
+            style={{
+              fontSize: normalize(18),
+              color: "white",
+            }}
+          >
             {weatherData.list[0].wind.speed} m/s
           </Text>
         </View>
@@ -33,9 +48,14 @@ export const WeatherTable: FC<WeatherTableProps> = ({ weatherData }) => {
           <MaterialCommunityIcons
             name="water-percent"
             size={normalize(38)}
-            color="black"
+            color="white"
           />
-          <Text style={styles.text}>
+          <Text
+            style={{
+              fontSize: normalize(18),
+              color: "white",
+            }}
+          >
             {weatherData.list[0].main.humidity}%
           </Text>
         </View>
@@ -52,6 +72,7 @@ const styles = StyleSheet.create({
     justifyContent: "space-evenly",
   },
   view: {
+    marginTop: Platform.OS === "android" ? normalize(25) : 0,
     display: "flex",
     flexShrink: 33,
     flexDirection: "row",

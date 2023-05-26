@@ -64,6 +64,7 @@ export const HomePage = () => {
       dispatch(getWeather(location.coords));
     }
   }, []);
+  
   if (weatherError) {
     return (
       <Layout>
