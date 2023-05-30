@@ -1,6 +1,6 @@
-import { combineReducers, configureStore } from "@reduxjs/toolkit";
-import { useDispatch } from "react-redux";
-import weatherReducer from "./slices/weaterSlice";
+import { combineReducers, configureStore } from '@reduxjs/toolkit';
+import { useDispatch } from 'react-redux';
+import weatherReducer from './weatherSlice/reducers';
 
 const combinedReducer = combineReducers({
   weather: weatherReducer,
@@ -8,10 +8,9 @@ const combinedReducer = combineReducers({
 
 export const store = configureStore({
   reducer: combinedReducer,
-  middleware: (getDefaultMiddleware) =>
-    getDefaultMiddleware({
-      serializableCheck: false,
-    }),
+  middleware: (getDefaultMiddleware) => getDefaultMiddleware({
+    serializableCheck: false,
+  }),
 });
 
 export type RootState = ReturnType<typeof combinedReducer>;

@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "weatherApp",
-    "slug": "weatherApp",
+    "slug": "wheather-app",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -24,10 +24,17 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "package": "com.dusugen.wheatherapp"
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "extra": {
+      "eas": {
+        "projectId": "b8dc73cc-fade-416a-bae8-fbbeebdfd178"
+      }
+    },
+    "owner": "dusugen"
   }
 }

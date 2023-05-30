@@ -1,13 +1,25 @@
-import { Box, Heading, Radio, useColorMode } from "native-base";
-import React, { FC } from "react";
-import { StyleSheet } from "react-native";
-import normalize from "react-native-normalize";
+import {
+  Box, Heading, Radio, useColorMode,
+} from 'native-base';
+import React, { FC, memo } from 'react';
+import { StyleSheet } from 'react-native';
+import normalize from 'react-native-normalize';
 
 interface ChangeThemeButtonProps {
   onChange: () => void;
 }
 
-export const ChangeThemeButton: FC<ChangeThemeButtonProps> = ({ onChange }) => {
+const styles = StyleSheet.create({
+  container: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: '85%',
+    gap: normalize(50),
+  },
+});
+
+const ChangeThemeButton: FC<ChangeThemeButtonProps> = ({ onChange }) => {
   const { colorMode, setColorMode } = useColorMode();
 
   return (
@@ -16,7 +28,7 @@ export const ChangeThemeButton: FC<ChangeThemeButtonProps> = ({ onChange }) => {
       <Radio.Group
         name="myRadioGroup"
         accessibilityLabel="favorite number"
-        value={colorMode ? colorMode : "light"}
+        value={colorMode || 'light'}
         onChange={(nextValue) => {
           setColorMode(nextValue);
           onChange();
@@ -33,12 +45,4 @@ export const ChangeThemeButton: FC<ChangeThemeButtonProps> = ({ onChange }) => {
   );
 };
 
-const styles = StyleSheet.create({
-  container: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    height: "85%",
-    gap: normalize(50),
-  },
-});
+export default memo(ChangeThemeButton);

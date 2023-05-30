@@ -25,6 +25,6 @@ export interface WeatherMainData {
       main: string;
       icon: string;
       description: string;
-    }
+    },
   ];
 }

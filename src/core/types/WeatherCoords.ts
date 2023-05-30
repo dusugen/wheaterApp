@@ -1,8 +1,8 @@
-import { LocationGeocodedLocation } from "expo-location";
+import { LocationGeocodedLocation } from 'expo-location';
 
 export type WeatherCoords = Pick<
-  LocationGeocodedLocation,
-  "latitude" | "longitude"
+LocationGeocodedLocation,
+'latitude' | 'longitude'
 >;
 
 export type WeatherCoordsWithName = WeatherCoords & {
